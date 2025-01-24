@@ -81,7 +81,7 @@ def find_optimal_clusters(X_scaled, max_clusters=15):
     
     return best_silhouette_k
 
-def perform_clustering(X_scaled, n_clusters=5):
+def perform_clustering(X_scaled, n_clusters=10):
     """
     Perform K-means clustering on the scaled data.
     """
@@ -107,13 +107,11 @@ def analyze_clusters(processed_df, clusters):
     Analyze the characteristics of each cluster.
     """
     n_clusters = len(np.unique(clusters))
-    cluster_descriptions = {
-        0: "Familien mit mittlerem Einkommen",
-        1: "Kostenbewusste Rentner",
-        2: "Karriereorientierte Paare",
-        3: "Junge Großfamilien",
-        4: "Wohlhabende Best Ager"
-    }
+    
+    # Generate generic descriptions for any number of clusters
+    cluster_descriptions = {}
+    for i in range(n_clusters):
+        cluster_descriptions[i] = f"Cluster {i+1}"
     
     print("\nDetaillierte Cluster-Analyse:\n")
     for cluster in range(n_clusters):
@@ -127,38 +125,33 @@ def analyze_clusters(processed_df, clusters):
         print(f"• Durchschnittliche Familiengröße: {cluster_data['Family_Size'].mean():.1f} Personen")
         
         print("\nAusgabenverhalten:")
-        spending_dist = {
-            'Niedrig': len(cluster_data[cluster_data['Spending_Score'] <= 1.5]) / len(cluster_data) * 100,
-            'Mittel': len(cluster_data[(cluster_data['Spending_Score'] > 1.5) & 
-                                     (cluster_data['Spending_Score'] <= 2.5)]) / len(cluster_data) * 100,
-            'Hoch': len(cluster_data[cluster_data['Spending_Score'] > 2.5]) / len(cluster_data) * 100
-        }
-        for category, percentage in spending_dist.items():
-            if percentage > 0:
-                print(f"• {category}: {percentage:.1f}%")
+        spending_dist = cluster_data['Spending_Score'].value_counts(normalize=True) * 100
+        for score, percentage in spending_dist.items():
+            spending_level = {1: 'Niedrig', 2: 'Mittel', 3: 'Hoch'}[score]
+            print(f"• {spending_level}: {percentage:.1f}%")
         
-        print("\nBesondere Merkmale:")
-        if cluster == 0:
-            print("• Mittleres Alter mit größeren Familien")
-            print("• Überwiegend mittleres Ausgabenniveau")
-            print("• Stabile Familienstruktur")
-        elif cluster == 1:
-            print("• Ältere Generation mit kleinen Haushalten")
-            print("• Sehr kostenbewusst")
-            print("• Fokus auf Sparsamkeit")
-        elif cluster == 2:
-            print("• Hohe Berufserfahrung")
-            print("• Kleine bis mittlere Familien")
-            print("• Ausgewogenes Ausgabenverhalten")
-        elif cluster == 3:
-            print("• Jüngste Altersgruppe")
-            print("• Größte durchschnittliche Familiengröße")
-            print("• Stark preisbewusst")
-        elif cluster == 4:
-            print("• Ältere, wohlhabende Zielgruppe")
-            print("• Kleine Haushalte")
-            print("• Höchster Anteil an hohen Ausgaben")
-        print("-" * 50)
+        # Calculate and print cluster characteristics
+        features = ['Age', 'Work_Experience', 'Family_Size', 'Spending_Score']
+        cluster_means = cluster_data[features].mean()
+        cluster_stds = cluster_data[features].std()
+        
+        # Identify distinctive features (those that deviate significantly from overall mean)
+        all_means = processed_df[features].mean()
+        all_stds = processed_df[features].std()
+        
+        distinctive_features = []
+        for feature in features:
+            z_score = (cluster_means[feature] - all_means[feature]) / all_stds[feature]
+            if abs(z_score) > 0.5:  # Threshold for considering a feature distinctive
+                direction = "überdurchschnittlich" if z_score > 0 else "unterdurchschnittlich"
+                distinctive_features.append(f"{feature} ({direction})")
+        
+        if distinctive_features:
+            print("\nCharakteristische Merkmale:")
+            for feature in distinctive_features:
+                print(f"• {feature}")
+        
+        print("\n" + "-"*50)
 
 def evaluate_clustering(X_scaled, kmeans_model):
     """

@@ -6,7 +6,7 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bo
 import numpy as np
 import matplotlib.pyplot as plt
 
-def find_optimal_clusters(X_scaled, max_clusters=10):
+def find_optimal_clusters(X_scaled, max_clusters=15):
     """
     Find the optimal number of clusters using elbow method and silhouette analysis.
     """
@@ -27,20 +27,42 @@ def find_optimal_clusters(X_scaled, max_clusters=10):
     
     # Inertia plot
     plt.subplot(1, 2, 1)
-    plt.plot(k_range, inertias, 'bo-')
-    plt.xlabel('Anzahl der Cluster (K)')
-    plt.ylabel('Inertia')
-    plt.title('Elbow Method')
+    plt.plot(k_range, inertias, 'o-', color='blue', linewidth=2, markersize=6)
+    plt.xlabel('Anzahl der Cluster (K)', fontsize=10)
+    plt.ylabel('Inertia', fontsize=10)
+    plt.title('Elbow Method', pad=20, fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.2)
+    plt.xticks(range(2, 16))  # Show all K values from 2 to 15
+    
+    # Add annotation for the elbow point
+    elbow_point = np.argmin(np.abs(np.diff(np.diff(inertias)))) + 2
+    plt.annotate('Elbow Point', 
+                xy=(elbow_point, inertias[elbow_point-2]),
+                xytext=(elbow_point+1, inertias[elbow_point-2]*1.1),
+                arrowprops=dict(facecolor='red', shrink=0.05),
+                color='red')
     
     # Silhouette score plot
     plt.subplot(1, 2, 2)
-    plt.plot(k_range, silhouette_scores, 'ro-')
-    plt.xlabel('Anzahl der Cluster (K)')
-    plt.ylabel('Silhouette Score')
-    plt.title('Silhouette Analysis')
+    plt.plot(k_range, silhouette_scores, 'o-', color='blue', linewidth=2, markersize=6)
+    plt.xlabel('Anzahl der Cluster (K)', fontsize=10)
+    plt.ylabel('Silhouette Score', fontsize=10)
+    plt.title('Silhouette Analysis', pad=20, fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.2)
+    plt.xticks(range(2, 16))  # Show all K values from 2 to 15
+    
+    # Add annotation for best silhouette score
+    best_k = np.argmax(silhouette_scores) + 2
+    plt.annotate(f'Bester Score', 
+                xy=(best_k, max(silhouette_scores)),
+                xytext=(best_k+1, max(silhouette_scores)*0.95),
+                arrowprops=dict(facecolor='red', shrink=0.05),
+                color='red')
     
     plt.tight_layout()
-    plt.savefig('output/figures/cluster_optimization.png')
+    plt.savefig('output/figures/cluster_optimization.png', 
+                bbox_inches='tight',
+                dpi=300)
     plt.close()
     
     # Find optimal K
@@ -63,8 +85,14 @@ def perform_clustering(X_scaled, n_clusters=5):
     """
     Perform K-means clustering on the scaled data.
     """
+    # Always run the analysis to show the visualization
+    suggested_k = find_optimal_clusters(X_scaled)
+    
+    # Use the provided n_clusters or the suggested one if none provided
     if n_clusters is None:
-        n_clusters = find_optimal_clusters(X_scaled)
+        n_clusters = suggested_k
+    
+    print(f"\nUsing {n_clusters} clusters for the analysis")
     
     kmeans = KMeans(
         n_clusters=n_clusters,

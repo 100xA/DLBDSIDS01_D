@@ -72,7 +72,7 @@ def create_visualizations(processed_df, kmeans_model, X_scaled):
     feature_names = ['Alter', 'Arbeitserfahrung', 'Familiengröße', 'Ausgabenniveau']
     loading_matrix, explained_variance = analyze_pca_components(X_scaled, feature_names)
     
-    plt.style.use('seaborn')
+    plt.style.use("seaborn-v0_8")
     
     # Erstelle eine Figur mit mehr Platz für die Legende
     fig = plt.figure(figsize=(26, 10))

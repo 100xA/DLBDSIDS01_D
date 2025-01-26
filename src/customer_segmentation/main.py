@@ -4,6 +4,7 @@ Main script for customer segmentation analysis.
 from utils.preprocessing import load_and_preprocess_data
 from utils.visualization import create_visualizations
 from clustering import perform_clustering, analyze_clusters, evaluate_clustering
+import os
 
 def main():
     """
@@ -15,6 +16,31 @@ def main():
     # Perform clustering
     clusters, kmeans_model = perform_clustering(X_scaled)
     processed_df['Cluster'] = clusters
+    
+    # Save segmentation results
+    output_dir = 'data/processed'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Add cluster descriptions
+    cluster_descriptions = {
+        0: "Premium Familien",
+        1: "Junge Sparfamilien",
+        2: "Erfahrene Singles",
+        3: "Sparsame Senioren",
+        4: "Mittlere Ausgeber",
+        5: "Sparsame Singles",
+        6: "Erfahrene Ausgeber",
+        7: "Junge Erfahrene",
+        8: "Wohlhabende Senioren",
+        9: "Große Jungfamilien"
+    }
+    
+    processed_df['Cluster_Beschreibung'] = processed_df['Cluster'].map(cluster_descriptions)
+    
+    # Save to CSV
+    output_file = os.path.join(output_dir, 'customer_segments.csv')
+    processed_df.to_csv(output_file, index=False, encoding='utf-8')
+    print(f"\nSegmentierungsergebnisse wurden gespeichert in: {output_file}")
     
     # Analyze clusters
     analyze_clusters(processed_df, clusters)
